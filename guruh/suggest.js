@@ -83,10 +83,12 @@ if (!Array.isArray(global.__pluginMsgHooks)) {
     global.__pluginMsgHooks = [];
 }
 
-global.__pluginMsgHooks.push(async (ms, Guru, settings) => {
+global.__pluginMsgHooks.push(async (ms, Guru, settings, isSuperUser) => {
     try {
         // Ignore bot's own messages
         if (ms.key?.fromMe) return;
+
+        if (settings?.MODE?.toLowerCase() === "private" && !isSuperUser) return;
 
         const body = extractBody(ms);
         if (!body) return;

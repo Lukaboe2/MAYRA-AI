@@ -22,6 +22,9 @@ const {
     GuruAntiEdit,
     DEFAULT_SETTINGS,
 } = require(".");
+const { buildSuperUsers } = require("./connection/commandHandler");
+const { getSudoNumbers } = require("./database/sudo");
+const { standardizeJid } = require("./connection/serializer");
 
 const {
     findAntiDelete,
@@ -249,7 +252,23 @@ function setupChatBotAndAntiLink(Guru) {
         const firstMsg = messages[0];
         if (firstMsg?.message) {
             const s = await getAllSettings();
-            if (s.CHATBOT === "true" || s.CHATBOT === "audio") {
+            const gSender = (
+                firstMsg.key?.participant || firstMsg.key?.remoteJid || ""
+            ).split(":")[0];
+            let gIsSuperUser = false;
+            try {
+                const gSuperUsers = await buildSuperUsers(
+                    s,
+                    getSudoNumbers,
+                    standardizeJid(Guru.user?.id),
+                    s.OWNER_NUMBER || "",
+                );
+                gIsSuperUser = gSuperUsers.includes(gSender);
+            } catch (_) {}
+            const privateModeActive =
+                s.MODE?.toLowerCase() === "private" && !gIsSuperUser;
+
+            if (!privateModeActive && (s.CHATBOT === "true" || s.CHATBOT === "audio")) {
                 GuruChatBot(
                     Guru,
                     s.CHATBOT,
@@ -259,6 +278,8 @@ function setupChatBotAndAntiLink(Guru) {
                     googleTTS,
                 );
             }
+
+            var __privateModeActive = privateModeActive; // used below for handleGameMessage
         }
 
         for (const message of messages) {
@@ -273,7 +294,14 @@ function setupChatBotAndAntiLink(Guru) {
                 await GuruAntiSticker(Guru, message, getGroupMetadata);
             }
             await GuruAntiGroupMention(Guru, message, getGroupMetadata);
-            await handleGameMessage(Guru, message);
+            // Game replies (tic-tac-toe moves, WCG guesses, dice rolls) are a
+            // conversational response like any command, so they must respect
+            // private mode too — this listener used to call handleGameMessage
+            // unconditionally for every sender, bypassing the MODE check that
+            // the normal command pipeline in messageHandler.js already enforces.
+            if (!__privateModeActive) {
+                await handleGameMessage(Guru, message);
+            }
         }
     });
 }

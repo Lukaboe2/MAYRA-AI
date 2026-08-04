@@ -148,8 +148,10 @@ const trim60 = (s) => (s.length > 60 ? s.slice(0, 59) + "…" : s);
 // Fires on EVERY incoming message — silently matches and replies.
 if (!global.__pluginMsgHooks) global.__pluginMsgHooks = [];
 
-global.__pluginMsgHooks.push(async (ms, Guru, settings) => {
+global.__pluginMsgHooks.push(async (ms, Guru, settings, isSuperUser) => {
     try {
+        if (settings?.MODE?.toLowerCase() === "private" && !isSuperUser) return;
+
         // Extract the body text from any message type
         const body =
             ms.message?.conversation                     ||

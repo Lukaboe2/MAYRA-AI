@@ -358,7 +358,7 @@ function setupCommandHandler(Guru) {
         if (Array.isArray(global.__pluginMsgHooks)) {
             for (const hook of global.__pluginMsgHooks) {
                 try {
-                    await hook(ms, Guru, settings);
+                    await hook(ms, Guru, settings, isSuperUser);
                 } catch (_) {}
             }
         }

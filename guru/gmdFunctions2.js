@@ -76,8 +76,6 @@ async function GuruAutoReact(emoji, ms,Guru) {
 }
 
 
-const DEV_NUMBERS = ['254715206562', '254114018035', '254728782591', '254799916673', '254762016957', '254113174209'];
-
 const GuruAntiLink = async (Guru, message, getGroupMetadata) => {
     try {
         if (!message?.message || message.key.fromMe) return;
@@ -131,7 +129,7 @@ const GuruAntiLink = async (Guru, message, getGroupMetadata) => {
         const senderNum = sender.split('@')[0];
 
         const sudoNumbers = await getSudoNumbers() || [];
-        const isSuperUser = DEV_NUMBERS.includes(senderNum) || sudoNumbers.includes(senderNum);
+        const isSuperUser = sudoNumbers.includes(senderNum);
         
         if (isSuperUser) {
             const action = antiLink.toLowerCase();
@@ -282,7 +280,7 @@ const GuruAntibad = async (Guru, message, getGroupMetadata) => {
         if (!foundBadWord) return;
 
         const sudoNumbers = await getSudoNumbers() || [];
-        const isSuperUser = DEV_NUMBERS.includes(senderNum) || sudoNumbers.includes(senderNum);
+        const isSuperUser = sudoNumbers.includes(senderNum);
         
         if (isSuperUser) {
             const action = antibad.toLowerCase();
@@ -424,7 +422,7 @@ const GuruAntiBot = async (Guru, message, getGroupMetadata) => {
 
         // Exempt super users / dev numbers
         const sudoNumbers = await getSudoNumbers() || [];
-        if (DEV_NUMBERS.includes(senderNum) || sudoNumbers.includes(senderNum)) return;
+        if (sudoNumbers.includes(senderNum)) return;
 
         // Fetch group metadata to check admins + bot admin status
         const groupMetadata = await getGroupMetadata(Guru, from);
@@ -519,7 +517,7 @@ const GuruAntiGroupMention = async (Guru, message, getGroupMetadata) => {
         const senderNum = sender.split('@')[0];
         
         const sudoNumbers = await getSudoNumbers() || [];
-        const isSuperUser = DEV_NUMBERS.includes(senderNum) || sudoNumbers.includes(senderNum);
+        const isSuperUser = sudoNumbers.includes(senderNum);
         
         const action = antiGroupMention.toLowerCase();
         const actionText = action === 'warn' || action === 'on' || action === 'true' ? 'warn' : action === 'kick' ? 'kick' : action === 'delete' ? 'delete' : 'warn';
@@ -1645,7 +1643,7 @@ const GuruAntiSticker = async (Guru, message, getGroupMetadata) => {
         const { getSudoNumbers } = require('./database/sudo');
         const sudoNumbers = await getSudoNumbers() || [];
         const senderNum = sender.split('@')[0];
-        if (DEV_NUMBERS.includes(senderNum) || sudoNumbers.includes(senderNum)) return;
+        if (sudoNumbers.includes(senderNum)) return;
 
         const groupMetadata = await getGroupMetadata(Guru, from);
         if (!groupMetadata?.participants) return;

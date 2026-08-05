@@ -360,8 +360,15 @@ async function sendStartupMessage(socket, s) {
 
     try {
         console.log("… loadSession starting");
-        await withTimeout(loadSession(), 30_000, "loadSession");
+        const sessionResult = await withTimeout(loadSession(), 30_000, "loadSession");
         console.log("… loadSession done");
+
+        if (sessionResult === null) {
+            // No SESSION_ID set yet — web server stays alive for pairing.
+            // The process will keep running; set SESSION_ID in Replit Secrets and restart.
+            console.log("ℹ️  Bot is paused — set SESSION_ID in Replit Secrets then restart.");
+            return;
+        }
 
         console.log("… initDatabase starting");
         await initDatabase();

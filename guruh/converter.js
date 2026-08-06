@@ -1,5 +1,6 @@
 
 const { gmd, toAudio, toVideo, toPtt, stickerToImage, gmdFancy, gmdRandom, getSetting, runFFmpeg, getVideoDuration, gmdSticker } = require("../guru");
+const { downloadMediaMessage } = require("@whiskeysockets/baileys");
 const fs = require("fs").promises;
 const { StickerTypes } = require("wa-sticker-formatter");
 const { exec, execSync } = require("child_process");
@@ -46,6 +47,33 @@ function emojiToCode(emoji) {
         .join("-");
 }
 
+// Helper: download a quoted or direct media message as a Buffer using the
+// reliable downloadMediaMessage API (handles mediaKey as Uint8Array, works
+// with contextInfo quoted messages that may lack a CDN url).
+async function downloadMedia(Guru, mek, quotedMsg, quotedKey) {
+    // Direct media (image/video/sticker sent WITH the command as caption)
+    const directType = mek.message?.imageMessage  ? "imageMessage"
+        : mek.message?.videoMessage   ? "videoMessage"
+        : mek.message?.stickerMessage ? "stickerMessage"
+        : null;
+
+    if (directType && !quotedMsg) {
+        // mek is already a full WAMessage — download directly
+        return await downloadMediaMessage(mek, "buffer", {});
+    }
+
+    if (quotedMsg && quotedKey) {
+        // Reconstruct the full WAMessage envelope Baileys needs
+        return await downloadMediaMessage(
+            { key: quotedKey, message: quotedMsg },
+            "buffer",
+            {}
+        );
+    }
+
+    throw new Error("No downloadable media found in message or quoted context");
+}
+
 gmd({
     pattern: "sticker",
     aliases: ["st", "take"],
@@ -53,98 +81,83 @@ gmd({
     react: "🔄️",
     description: "Convert image/video/sticker to sticker.",
 }, async (from, Guru, conText) => {
-    const { q, mek, reply, react, quoted, packName, packAuthor } = conText;
+    const { q, mek, reply, react, quoted, quotedMsg, quotedKey, packName, packAuthor } = conText;
 
     try {
         // Accept media either quoted/replied-to OR sent directly with the
         // ".sticker" caption on the media itself.
-        const directImg = mek.message?.imageMessage;
-        const directVideo = mek.message?.videoMessage;
+        const directImg     = mek.message?.imageMessage;
+        const directVideo   = mek.message?.videoMessage;
         const directSticker = mek.message?.stickerMessage;
 
-        const quotedImg = quoted?.imageMessage || quoted?.message?.imageMessage || directImg;
-        const quotedSticker = quoted?.stickerMessage || quoted?.message?.stickerMessage || directSticker;
-        const quotedVideo = quoted?.videoMessage || quoted?.message?.videoMessage || directVideo;
+        const quotedImg     = quoted?.imageMessage     || quoted?.message?.imageMessage     || (directImg     && !quotedMsg ? directImg     : null);
+        const quotedSticker = quoted?.stickerMessage   || quoted?.message?.stickerMessage   || (directSticker && !quotedMsg ? directSticker : null);
+        const quotedVideo   = quoted?.videoMessage     || quoted?.message?.videoMessage     || (directVideo   && !quotedMsg ? directVideo   : null);
 
-        if (!quotedImg && !quotedSticker && !quotedVideo) {
+        const hasMedia = quotedImg || quotedSticker || quotedVideo
+            || directImg || directVideo || directSticker;
+
+        if (!hasMedia) {
             await react("❌");
             return reply(
                 "Please reply to (or send directly with the caption) an image, video, GIF or sticker to convert it."
             );
         }
 
-        let tempFilePath;
+        const stickerOpts = {
+            pack: packName || "ULTRA GURU",
+            author: packAuthor || "GURU-TECH",
+            type: q.includes("--crop") || q.includes("-c") ? StickerTypes.CROPPED : StickerTypes.FULL,
+            categories: ["🤩", "🎉"],
+            id: "12345",
+            quality: 75,
+            background: "transparent",
+        };
+
+        let mediaFile;
         try {
-            if (quotedImg || quotedVideo) {
-                tempFilePath = await Guru.downloadAndSaveMediaMessage(
-                    quotedImg || quotedVideo,
-                    "temp_media"
-                );
+            if (quotedSticker || directSticker) {
+                // Sticker → Sticker
+                const buf = await downloadMedia(Guru, mek, quotedMsg, quotedKey);
+                mediaFile = gmdRandom(".webp");
+                await fs.writeFile(mediaFile, buf);
 
-                let fileExt = quotedImg ? ".jpg" : ".mp4";
-                let mediaFile = gmdRandom(fileExt);
-                const data = await fs.readFile(tempFilePath);
-                await fs.writeFile(mediaFile, data);
+            } else if (quotedImg || directImg) {
+                // Image → Sticker
+                const buf = await downloadMedia(Guru, mek, quotedMsg, quotedKey);
+                mediaFile = gmdRandom(".jpg");
+                await fs.writeFile(mediaFile, buf);
 
-                // 🔥 If video → convert to webp
-                if (quotedVideo) {
-                    const compressedFile = gmdRandom(".webp");
-                    let duration = 8; // default duration
-                    
-                    try {
-                        duration = await getVideoDuration(mediaFile);
-                        if (duration > 10) duration = 10; // trim to first 10 seconds
-                    } catch (e) {
-                        console.error("Using default duration due to error:", e);
-                    }
-                    
-                    await runFFmpeg(mediaFile, compressedFile, 320, 15, duration);
-                    await fs.unlink(mediaFile).catch(() => {});
-                    mediaFile = compressedFile;
+            } else if (quotedVideo || directVideo) {
+                // Video → animated sticker
+                const buf = await downloadMedia(Guru, mek, quotedMsg, quotedKey);
+                const rawFile = gmdRandom(".mp4");
+                await fs.writeFile(rawFile, buf);
+
+                let duration = 8;
+                try {
+                    duration = await getVideoDuration(rawFile);
+                    if (duration > 10) duration = 10;
+                } catch (e) {
+                    console.error("Using default duration:", e.message);
                 }
 
-                const stickerBuffer = await gmdSticker(mediaFile, {
-                    pack: packName || "ULTRA GURU", 
-                    author: packAuthor || "GURU-TECH",
-                    type: q.includes("--crop") || q.includes("-c") ? StickerTypes.CROPPED : StickerTypes.FULL,
-                    categories: ["🤩", "🎉"],
-                    id: "12345",
-                    quality: 75,
-                    background: "transparent"
-                });
-
-                await fs.unlink(mediaFile).catch(() => {});
-                await react("✅");
-                return Guru.sendMessage(from, { sticker: stickerBuffer }, { quoted: mek });
-
-            } else if (quotedSticker) {
-                // Sticker → Sticker (recompress if too big)
-                tempFilePath = await Guru.downloadAndSaveMediaMessage(quotedSticker, "temp_media");
-                const stickerData = await fs.readFile(tempFilePath);
-                const stickerFile = gmdRandom(".webp");
-                await fs.writeFile(stickerFile, stickerData);
-
-                const newStickerBuffer = await gmdSticker(stickerFile, {
-                    pack: packName || "ULTRA GURU", 
-                    author: packAuthor || "GURU-TECH",
-                    type: q.includes("--crop") || q.includes("-c") ? StickerTypes.CROPPED : StickerTypes.FULL,
-                    categories: ["🤩", "🎉"],
-                    id: "12345",
-                    quality: 75,
-                    background: "transparent"
-                });
-
-                await fs.unlink(stickerFile).catch(() => {});
-                await react("✅");
-                return Guru.sendMessage(from, { sticker: newStickerBuffer }, { quoted: mek });
+                mediaFile = gmdRandom(".webp");
+                await runFFmpeg(rawFile, mediaFile, 320, 15, duration);
+                await fs.unlink(rawFile).catch(() => {});
             }
+
+            const stickerBuffer = await gmdSticker(mediaFile, stickerOpts);
+            await react("✅");
+            return Guru.sendMessage(from, { sticker: stickerBuffer }, { quoted: mek });
+
         } finally {
-            if (tempFilePath) await fs.unlink(tempFilePath).catch(() => {});
+            if (mediaFile) await fs.unlink(mediaFile).catch(() => {});
         }
     } catch (e) {
         console.error("Error in sticker command:", e);
         await react("❌");
-        await reply("Failed to convert to sticker");
+        await reply(`❌ Sticker failed: ${e.message || String(e)}`);
     }
 });
 

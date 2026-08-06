@@ -37,7 +37,12 @@ const sessionPath = path.join(sessionDir, "creds.json");
 
 // ============ HOST DETECTION ============
 function detectHostEnvironment() {
-    if (process.env.KATABAMP) return 'katabamp';
+    // KATABUMP or PLATFORM=katabump — set manually as a Variable in Katabump's
+    // Startup tab. There's no automatic signal that distinguishes Katabump
+    // from other Pterodactyl-style panels, so this is opt-in and explicit —
+    // it will never misfire on a different panel where interactive paste
+    // already works fine.
+    if (process.env.KATABUMP || (process.env.PLATFORM || '').toLowerCase() === 'katabump') return 'katabump';
     if (process.env.PTERODACTYL || process.env.PANEL) return 'pterodactyl';
     if (process.env.KOYEB) return 'koyeb';
     if (process.env.RENDER) return 'render';
@@ -50,6 +55,23 @@ function detectHostEnvironment() {
 
 // Cloud platforms that supply SESSION_ID via environment variables only
 const CLOUD_ENVS = ['heroku', 'render', 'koyeb', 'railway', 'replit'];
+
+function printKatabumpGuidance() {
+    console.error(`
+------------------------------------------------------------
+ SESSION_ID is not set
+
+ Katabump's console doesn't reliably deliver pasted input to
+ this process on restarts, so this bot won't wait and crash
+ after a timeout. Set it up like this instead:
+
+ 1. Open File Manager, go to the project root
+ 2. Create/edit a file named .env
+ 3. Add a line: SESSION_ID=GURU~xxxxxxxxxxxx
+ 4. Save, then restart the server
+------------------------------------------------------------
+`);
+}
 
 // ============ SESSION LOADER ============
 async function loadSession() {
@@ -72,28 +94,34 @@ async function loadSession() {
         if (!sessionId || typeof sessionId !== 'string' || sessionId.trim() === '') {
             if (CLOUD_ENVS.includes(hostEnv)) {
                 // Heroku / Render / Koyeb / Railway — must use env var
-                console.error("╔══════════════════════════════════════════════════════════╗");
-                console.error("║  ❌  SESSION_ID is not set!                              ║");
-                console.error("║  Add SESSION_ID to your platform's environment variables.║");
-                console.error("║  Format:  SESSION_ID=GURU~xxxxxxxxxxxxxxxx...            ║");
-                console.error("╚══════════════════════════════════════════════════════════╝");
+                console.error("------------------------------------------------------------");
+                console.error(" SESSION_ID is not set!");
+                console.error(" Add SESSION_ID to your platform's environment variables.");
+                console.error(" Format: SESSION_ID=GURU~xxxxxxxxxxxxxxxx...");
+                console.error("------------------------------------------------------------");
                 if (hostEnv === 'replit') {
                     // On Replit, keep the web server alive so the dashboard is accessible
                     console.log("⏳ Waiting for SESSION_ID to be set in Replit Secrets...");
                     return null; // signal to index.js to skip startGuru until session is provided
                 }
                 process.exit(1);
+            } else if (hostEnv === 'katabump') {
+                // Known-unreliable interactive console — skip the prompt
+                // entirely and show clear guidance instead of hanging until
+                // a timeout crash.
+                printKatabumpGuidance();
+                process.exit(0);
             } else {
-                // Panels (Katabamp, Pterodactyl), VPS, local — prompt to paste
+                // Other panels (Pterodactyl, VPS, local) — prompt to paste
                 const readline = require('readline');
                 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
                 console.log(`
-╔══════════════════════════════════════════════════════════════╗
-║           📱  ULTRA GURU MD — SESSION SETUP                  ║
-╠══════════════════════════════════════════════════════════════╣
-║  Paste your SESSION_ID below and press Enter.                ║
-║  Format:  GURU~xxxxxxxx...                                   ║
-╚══════════════════════════════════════════════════════════════╝`);
+------------------------------------------------------------
+ ULTRA GURU MD — SESSION SETUP
+
+ Paste your SESSION_ID below and press Enter.
+ Format: GURU~xxxxxxxx...
+------------------------------------------------------------`);
                 sessionId = await new Promise((resolve) => {
                     rl.question('\n> SESSION_ID: ', (answer) => {
                         rl.close();

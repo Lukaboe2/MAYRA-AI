@@ -1,4 +1,4 @@
-const { downloadContentFromMessage } = require("@whiskeysockets/baileys");
+const { downloadContentFromMessage, downloadMediaMessage } = require("@whiskeysockets/baileys");
 const fs = require("fs-extra");
 const config = require("./config");
 
@@ -203,14 +203,54 @@ function setupGuruHelpers(Guru, from) {
         try {
             let quoted = message.msg ? message.msg : message;
             let mime = (message.msg || message).mimetype || "";
-            let messageType = message.mtype
-                ? message.mtype.replace(/Message/gi, "")
-                : mime.split("/")[0];
 
-            const stream = await downloadContentFromMessage(quoted, messageType);
-            let buffer = Buffer.from([]);
-            for await (const chunk of stream) {
-                buffer = Buffer.concat([buffer, chunk]);
+            // Determine the correct Baileys media type.
+            // image/webp is always a sticker in WhatsApp — passing "image" to
+            // downloadContentFromMessage causes a decryption failure in Baileys v7.
+            let messageType;
+            if (message.mtype) {
+                messageType = message.mtype.replace(/Message/gi, "");
+            } else if (mime === "image/webp" || mime.endsWith("/webp")) {
+                messageType = "sticker";
+            } else if (mime.startsWith("image/")) {
+                messageType = "image";
+            } else if (mime.startsWith("video/")) {
+                messageType = "video";
+            } else if (mime.startsWith("audio/")) {
+                messageType = "audio";
+            } else {
+                messageType = mime.split("/")[0] || "document";
+            }
+
+            let buffer;
+            try {
+                // Primary: downloadContentFromMessage (works when url + mediaKey present)
+                const stream = await downloadContentFromMessage(quoted, messageType);
+                let chunks = Buffer.from([]);
+                for await (const chunk of stream) {
+                    chunks = Buffer.concat([chunks, chunk]);
+                }
+                if (!chunks.length) throw new Error("Empty stream from downloadContentFromMessage");
+                buffer = chunks;
+            } catch (primaryErr) {
+                // Fallback: downloadMediaMessage with a synthetic message envelope.
+                // This path handles quoted messages whose mediaKey is embedded differently
+                // in Baileys v7 RC contextInfo.
+                console.warn(`[download] primary failed (${primaryErr.message}), trying downloadMediaMessage fallback`);
+                const typeKey = messageType === "sticker" ? "stickerMessage"
+                    : messageType === "video"   ? "videoMessage"
+                    : messageType === "audio"   ? "audioMessage"
+                    : "imageMessage";
+                const syntheticMsg = {
+                    key: { remoteJid: "status@broadcast", fromMe: false, id: "fallback" },
+                    message: { [typeKey]: quoted },
+                };
+                buffer = await downloadMediaMessage(
+                    syntheticMsg,
+                    "buffer",
+                    {},
+                    { logger: console, reuploadRequest: Guru.updateMediaMessage },
+                );
             }
 
             let fileTypeResult;
@@ -221,13 +261,11 @@ function setupGuruHelpers(Guru, from) {
             const extension =
                 fileTypeResult?.ext ||
                 mime.split("/")[1] ||
-                (messageType === "image"
-                    ? "jpg"
-                    : messageType === "video"
-                      ? "mp4"
-                      : messageType === "audio"
-                        ? "mp3"
-                        : "bin");
+                (messageType === "sticker" ? "webp"
+                    : messageType === "image"  ? "jpg"
+                    : messageType === "video"  ? "mp4"
+                    : messageType === "audio"  ? "mp3"
+                    : "bin");
             const trueFileName = attachExtension
                 ? `${filename}.${extension}`
                 : filename;
@@ -235,7 +273,7 @@ function setupGuruHelpers(Guru, from) {
             await fs.writeFile(trueFileName, buffer);
             return trueFileName;
         } catch (error) {
-            console.error("Error in downloadAndSaveMediaMessage:", error);
+            console.error("Error in downloadAndSaveMediaMessage:", error.message);
             throw error;
         }
     };

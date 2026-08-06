@@ -80,7 +80,7 @@ async function loadSession() {
                 if (hostEnv === 'replit') {
                     // On Replit, keep the web server alive so the dashboard is accessible
                     console.log("⏳ Waiting for SESSION_ID to be set in Replit Secrets...");
-                    await new Promise(() => {}); // keep process alive
+                    return null; // signal to index.js to skip startGuru until session is provided
                 }
                 process.exit(1);
             } else {
@@ -106,7 +106,7 @@ async function loadSession() {
                 }
                 // ── Persist to .env so restarts don't prompt again ──────────
                 try {
-                    const envPath = path.join(__dirname, '..', '..', '.env');
+                    const envPath = path.join(__dirname, '..', '.env');
                     let envContent = '';
                     if (fs.existsSync(envPath)) {
                         envContent = fs.readFileSync(envPath, 'utf8');

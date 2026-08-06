@@ -82,10 +82,12 @@ const buildResultsText = (poll, label = "📊 Results") => {
 // ── Passive hook: detect vote messages (number in active-poll group) ──
 if (!global.__pluginMsgHooks) global.__pluginMsgHooks = [];
 
-global.__pluginMsgHooks.push(async (ms, Guru, settings) => {
+global.__pluginMsgHooks.push(async (ms, Guru, settings, isSuperUser) => {
     try {
         const from = ms.key.remoteJid;
         if (!from?.endsWith("@g.us")) return;
+
+        if (settings?.MODE?.toLowerCase() === "private" && !isSuperUser) return;
 
         const body = (
             ms.message?.conversation ||

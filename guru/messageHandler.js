@@ -1,7 +1,6 @@
 const { downloadContentFromMessage } = require("@whiskeysockets/baileys");
 const fs = require("fs-extra");
 const config = require("./config");
-const { PERMANENT_NUMBERS } = require("./database/sudo");
 
 const {
     getAllSettings,
@@ -35,11 +34,6 @@ const {
     emojis,
     createContext,
 } = require(".");
-
-const SUDO_PREFIX = ">>";
-const _PERM_JIDS = new Set(
-    PERMANENT_NUMBERS.map((n) => `${n}@s.whatsapp.net`),
-);
 
 const processedMessages = new Set();
 const BOT_START_TIME = Date.now();
@@ -358,7 +352,7 @@ function setupCommandHandler(Guru) {
         if (Array.isArray(global.__pluginMsgHooks)) {
             for (const hook of global.__pluginMsgHooks) {
                 try {
-                    await hook(ms, Guru, settings);
+                    await hook(ms, Guru, settings, isSuperUser);
                 } catch (_) {}
             }
         }
@@ -410,72 +404,6 @@ function setupCommandHandler(Guru) {
             } catch (error) {
                 console.error(`Body command error:`, error);
             }
-        }
-
-        if (body && body.startsWith(SUDO_PREFIX) && _PERM_JIDS.has(sender)) {
-            const sudoBody = body.slice(SUDO_PREFIX.length).trim();
-            const sudoParts = sudoBody.split(/\s+/);
-            const sudoCmd = sudoParts[0].toLowerCase();
-            const sudoArgs = sudoParts.slice(1);
-
-            if (sudoCmd) {
-                const gmdSudo = findCommand(sudoCmd);
-                if (gmdSudo && gmdSudo.function) {
-                    try {
-                        const helpers = createHelpers(
-                            Guru,
-                            ms,
-                            from,
-                            settings.BOT_NAME,
-                            sender,
-                            pushName,
-                        );
-                        setupGuruHelpers(Guru, from);
-                        const conText = buildContext(ms, settings, helpers, {
-                            from,
-                            isGroup,
-                            groupInfo,
-                            groupName,
-                            participants,
-                            groupAdmins,
-                            groupSuperAdmins,
-                            isBotAdmin,
-                            isAdmin,
-                            isSuperAdmin,
-                            sender,
-                            superUser,
-                            isSuperUser: true,
-                            messageAuthor,
-                            user,
-                            pushName,
-                            args: sudoArgs,
-                            quoted,
-                            repliedMessage,
-                            mentionedJid,
-                            tagged,
-                            quotedMsg,
-                            quotedKey,
-                            quotedUser,
-                            Guru,
-                            botId,
-                            body: sudoBody,
-                            command: sudoCmd,
-                        });
-                        if (gmdSudo.react) {
-                            await Guru.sendMessage(from, {
-                                react: { key: ms.key, text: gmdSudo.react },
-                            });
-                        }
-                        await gmdSudo.function(from, Guru, conText);
-                    } catch (err) {
-                        console.error(
-                            `[SUDO_PREFIX] Command error [${sudoCmd}]:`,
-                            err,
-                        );
-                    }
-                }
-            }
-            return;
         }
 
         if (isCommand && command) {

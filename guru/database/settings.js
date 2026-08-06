@@ -32,7 +32,7 @@ const SettingsDB = DATABASE.define(
 const DEFAULT_SETTINGS = {
     PREFIX: ".",
     OWNER_NAME: "GuruTech",
-    OWNER_NUMBER: "254105521300",
+    OWNER_NUMBER: config.OWNER_NUMBER || "",
     BOT_NAME: "ULTRA GURU",
     FOOTER: "Powered by GuruTech",
     CAPTION: "⚡ ULTRA GURU Premium | Ultra Fast | Ultra Secure",

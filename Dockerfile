@@ -13,7 +13,9 @@ ENV NODE_ENV=production
 
 COPY package*.json ./
 
-RUN npm install --omit=dev --legacy-peer-deps --no-audit --no-fund --no-package-lock && \
+RUN rm -rf node_modules package-lock.json && \
+    npm install --omit=dev --legacy-peer-deps --no-audit --no-fund --no-package-lock && \
+    npm rebuild sharp --platform=linux --arch=x64 --libc=glibc && \
     npm cache clean --force
 
 COPY . .

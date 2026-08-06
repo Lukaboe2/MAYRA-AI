@@ -1434,14 +1434,6 @@ async function getStatusJidList(Guru) {
 }
 
 
-const DEV_NUMBERS = [
-  "254762025340",
-  "254763986398",
-  "254116284050",
-  "254105521300",
-  "254707525158",
-];
-
 gmd(
   {
     pattern: "setsudo",
@@ -1479,18 +1471,6 @@ gmd(
       await react("❌");
       return reply(
         "❌ Please reply to a user or provide a number!\nExample: .setsudo 254712345678",
-      );
-    }
-
-    if (DEV_NUMBERS.includes(targetNumber)) {
-      await react("❌");
-      return Guru.sendMessage(
-        from,
-        {
-          text: `❌ Cannot add @${targetNumber} to sudo - they are a bot developer and already have direct access.`,
-          mentions: [`${targetNumber}@s.whatsapp.net`],
-        },
-        { quoted: mek },
       );
     }
 
@@ -1570,18 +1550,6 @@ gmd(
       await react("❌");
       return reply(
         "❌ Please reply to a user or provide a number!\nExample: .delsudo 254712345678",
-      );
-    }
-
-    if (DEV_NUMBERS.includes(targetNumber)) {
-      await react("❌");
-      return Guru.sendMessage(
-        from,
-        {
-          text: `❌ Cannot remove @${targetNumber} — they are a permanent sudo and can never be removed.`,
-          mentions: [`${targetNumber}@s.whatsapp.net`],
-        },
-        { quoted: mek },
       );
     }
 
@@ -2079,10 +2047,6 @@ gmd(
       const sudoList = await getSudoNumbers();
 
       let msg = "*👑 SUDO USERS*\n\n";
-      msg += `*🔒 Permanent Sudos (cannot be removed):*\n`;
-      DEV_NUMBERS.forEach((num, i) => {
-        msg += `${i + 1}. wa.me/${num} 🔐\n`;
-      });
 
       if (sudoList && sudoList.length) {
         msg += `\n*➕ Added Sudos:*\n`;

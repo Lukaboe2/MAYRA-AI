@@ -106,7 +106,7 @@ async function loadSession() {
                 }
                 // ── Persist to .env so restarts don't prompt again ──────────
                 try {
-                    const envPath = path.join(__dirname, '..', '..', '.env');
+                    const envPath = path.join(__dirname, '..', '.env');
                     let envContent = '';
                     if (fs.existsSync(envPath)) {
                         envContent = fs.readFileSync(envPath, 'utf8');

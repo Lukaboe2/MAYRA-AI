@@ -2,6 +2,7 @@
 
 const { gmd }          = require("../guru");
 const moment           = require("moment-timezone");
+const { sendButtons }  = require("gifted-btns");
 
 const {
     buildThemedMenu,
@@ -21,10 +22,53 @@ gmd(
         description: "Show the bot command menu",
     },
     async (from, Guru, conText) => {
-        const { react, mek } = conText;
+        const { react, mek, botFooter, botName } = conText;
         await react("📋");
         const text = await buildThemedMenu(conText, Guru);
         await sendMenuMsg(Guru, from, text, conText);
+
+        // ── Tappable category picker — same numbering as the text list, ────
+        // so tapping a row behaves exactly like replying with that number.
+        try {
+            const cats = getSortedCategories();
+            const allRows = cats.map(({ cat, cmds }, i) => {
+                const icon  = CAT_ICONS[cat] || "🔥";
+                const label = cat[0].toUpperCase() + cat.slice(1);
+                return {
+                    id: String(i + 1),
+                    title: `${icon} ${label}`,
+                    description: `${cmds.length} command${cmds.length !== 1 ? "s" : ""}`,
+                };
+            });
+
+            // Split into chunks of 10 rows per section (safer across clients)
+            const sections = [];
+            for (let i = 0; i < allRows.length; i += 10) {
+                const chunk = allRows.slice(i, i + 10);
+                sections.push({
+                    title: `Categories ${i + 1}–${i + chunk.length}`,
+                    rows: chunk,
+                });
+            }
+
+            await sendButtons(Guru, from, {
+                text: "Tap a category below to browse its commands 👇",
+                footer: botFooter,
+                buttons: [
+                    {
+                        name: "single_select",
+                        buttonParamsJson: JSON.stringify({
+                            title: `📂 ${botName || "ULTRA GURU"} — Categories`,
+                            sections,
+                        }),
+                    },
+                ],
+            });
+        } catch (_) {
+            // Older clients that don't render list messages just miss the
+            // picker — the text menu (with numbers to reply with) still works.
+        }
+
         await react("✅");
 
         // ── Live clock below the menu — ticks every second for 60s ──────────

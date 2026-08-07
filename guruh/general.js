@@ -84,17 +84,17 @@ gmd(
         const cmdList = cmds.map(c => {
             const desc = c.description ? ` — _${c.description}_` : "";
             const alts = (c.aliases || []).length
-                ? `\n│   ↳ _${c.aliases.map(a => `${botPrefix}${a}`).join(", ")}_`
+                ? `\n> │   ↳ _${c.aliases.map(a => `${botPrefix}${a}`).join(", ")}_`
                 : "";
-            return `│ ◈ *${botPrefix}${c.pattern}*${desc}${alts}`;
+            return `> │ ◈ *${botPrefix}${c.pattern}*${desc}${alts}`;
         }).join("\n");
 
         const text =
-`╭─⌈ ${icon} *${label}* ⌋
-│ _${cmds.length} command${cmds.length !== 1 ? 's' : ''} available_
-│
+`> ╭─⌈ ${icon} *${label}* ⌋
+> │ _${cmds.length} command${cmds.length !== 1 ? 's' : ''} available_
+> │
 ${cmdList}
-╰⊷ ✨ _${botFooter || "Powered by GURUTECH"}_`;
+> ╰⊷ ✨ _${botFooter || "Powered by GURUTECH"}_`;
 
         try {
             await Guru.sendMessage(from, {

@@ -146,28 +146,27 @@ const THEMES = {
 
     ultra: {
         name: "🔷 ULTRA",
-        description: "Premium blockquote style with clean stats",
+        description: "Corner-bracket box style — matches .ping",
         render({ botName, botPrefix, botVersion, botMode, botFooter,
                   uptime, totalCmds, catLines, expiryLine, numCats,
                   pushName, memBar, dateStr, timeStr, timeGreet }) {
+            const cats = catLines.split("\n").map(l => l.replace(/^> ?/, "│ ")).join("\n");
             return (
-`> 🔥 *${botName.toUpperCase()}*  ·  _v${botVersion}_
-> ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-> 👤 Hey *${pushName}*  —  ${timeGreet}
-> 📅 ${dateStr}  ·  🕐 ${timeStr}
-> ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-> 💬 Commands  ›  *${totalCmds}*
-> ⏱️  Uptime    ›  *${uptime}*
-> 🔑  Prefix    ›  *${botPrefix}*
-> 🛠️  Mode      ›  *${botMode.toUpperCase()}*
-> 💾  RAM       ›  ${memBar}
-> 🔒  Licence   ›  ${expiryLine}
-> ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-> 📋 *CATEGORIES*  ·  _reply 1–${numCats}_
-> ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${catLines}
-> ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-> ✨ _${botFooter}_`
+`╭─⌈ 🔥 *${botName.toUpperCase()}*  ·  _v${botVersion}_ ⌋
+│ 👤 Hey *${pushName}*  —  ${timeGreet}
+│ 📅 ${dateStr}  ·  🕐 ${timeStr}
+│
+│ 💬 Commands  ›  *${totalCmds}*
+│ ⏱️  Uptime    ›  *${uptime}*
+│ 🔑  Prefix    ›  *${botPrefix}*
+│ 🛠️  Mode      ›  *${botMode.toUpperCase()}*
+│ 💾  RAM       ›  ${memBar}
+│ 🔒  Licence   ›  ${expiryLine}
+│
+│ 📋 *CATEGORIES*  ·  _reply 1–${numCats}_
+│
+${cats}
+╰⊷ ✨ _${botFooter}_`
             );
         },
     },

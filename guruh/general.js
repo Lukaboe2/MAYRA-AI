@@ -92,7 +92,7 @@ gmd(
         const text =
 `╭─⌈ ${icon} *${label}* ⌋
 │ _${cmds.length} command${cmds.length !== 1 ? 's' : ''} available_
-├───────────────
+│
 ${cmdList}
 ╰⊷ ✨ _${botFooter || "Powered by GURUTECH"}_`;
 

@@ -48,10 +48,6 @@ function getTimezoneFromPhone(phoneNum) {
 // Structure: Map<jid, { date: 'YYYY-MM-DD', gm: bool, gn: bool, noon: bool }>
 const _userGreeted = new Map();
 
-// ─── PER-USER VACATION-REPLY TRACKER (in-memory, resets each bot start) ──────
-// Structure: Map<jid, 'YYYY-MM-DD'> — only one away-notice sent per sender/day
-const _vacationNotified = new Map();
-
 function _todayKey(tz) {
     const d = new Date(new Date().toLocaleString('en-US', { timeZone: tz || 'UTC' }));
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -64,18 +60,12 @@ function _localHour(tz) {
 const DEFAULT_VACATION_MESSAGE =
     "🏖️ I'm currently away and may not respond right away. I'll get back to you as soon as I'm back!";
 
-// Sends an away-notice to a DM sender at most once per day while vacation
-// mode is on. Returns true if a notice was sent, false otherwise.
+// Sends an away-notice to a DM sender every time they text, for as long as
+// vacation mode is on. Returns true if a notice was sent, false otherwise.
 async function checkVacationReply(Guru, jid, settings) {
     try {
         if (!jid || jid.endsWith('@g.us') || jid.endsWith('@newsletter') || jid === 'status@broadcast') return false;
         if (settings?.VACATION_MODE !== 'true') return false;
-
-        const tz    = await getUserTimezone(jid);
-        const today = _todayKey(tz);
-
-        if (_vacationNotified.get(jid) === today) return false;
-        _vacationNotified.set(jid, today);
 
         const msg = settings.VACATION_MESSAGE || DEFAULT_VACATION_MESSAGE;
         await Guru.sendMessage(jid, { text: msg });

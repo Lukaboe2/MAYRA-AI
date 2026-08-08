@@ -14,6 +14,11 @@ const {
   updateNoteById,
   deleteAllNotes,
 } = require("../guru/database/notes");
+const {
+  getTopCommands,
+  getTotalCommandRuns,
+  resetStats,
+} = require("../guru/database/stats");
 
 function parseBooleanInput(input) {
   if (!input) return null;
@@ -764,6 +769,48 @@ gmd(
 
 gmd(
   {
+    pattern: "setvacation",
+    aliases: ["vacation", "awaymode", "setaway"],
+    react: "🏖️",
+    category: "owner",
+    description: "Toggle vacation/away mode. Usage: .setvacation on [message] | .setvacation off",
+  },
+  async (from, Guru, conText) => {
+    const { q, reply, react, isSuperUser } = conText;
+    if (!isSuperUser) return reply("❌ Owner Only Command!");
+
+    const parts = (q || "").trim().split(/\s+/);
+    const toggle = parseBooleanInput(parts[0]);
+    if (!toggle) {
+      return reply(
+        `❌ Please specify: on or off\n\nUsage:\n.setvacation on I'm away until Monday\n.setvacation off`,
+      );
+    }
+
+    try {
+      await setSetting("VACATION_MODE", toggle);
+
+      if (toggle === "true") {
+        const customMsg = (q || "").trim().split(/\s+/).slice(1).join(" ").trim();
+        if (customMsg) {
+          await setSetting("VACATION_MESSAGE", customMsg);
+        }
+        const activeMsg = customMsg || (await getSetting("VACATION_MESSAGE")) ||
+          "🏖️ I'm currently away and may not respond right away. I'll get back to you as soon as I'm back!";
+        await react("✅");
+        await reply(`✅ Vacation mode: *ON*\n\n💬 Away message:\n_${activeMsg}_\n\nDMs from non-owner users will get this once per day.`);
+      } else {
+        await react("✅");
+        await reply(`✅ Vacation mode: *OFF*`);
+      }
+    } catch (error) {
+      await reply(`❌ Error: ${error.message}`);
+    }
+  },
+);
+
+gmd(
+  {
     pattern: "setgroupevents",
     aliases: ["groupevents", "gcevents", "setgcevents", "events"],
     react: "⚙️",
@@ -1199,6 +1246,62 @@ gmd(
       return reply(
         `✅ Deleted ${count} note${count > 1 ? "s" : ""} for ${userNumber}!`,
       );
+    } catch (error) {
+      await reply(`❌ Error: ${error.message}`);
+    }
+  },
+);
+
+gmd(
+  {
+    pattern: "stats",
+    aliases: ["botstats", "usagestats"],
+    react: "📊",
+    category: "owner",
+    description: "Show command usage statistics",
+  },
+  async (from, Guru, conText) => {
+    const { reply, react, isSuperUser, botPrefix } = conText;
+    if (!isSuperUser) return reply("❌ Owner Only Command!");
+
+    try {
+      const top = await getTopCommands(10);
+      const total = await getTotalCommandRuns();
+
+      if (!top.length) {
+        await react("📊");
+        return reply("📊 No command usage recorded yet.");
+      }
+
+      const lines = top
+        .map((row, i) => `${i + 1}. *${botPrefix}${row.command}* — ${row.count} use${row.count !== 1 ? "s" : ""}`)
+        .join("\n");
+
+      await react("📊");
+      await reply(
+        `> ╭─⌈ 📊 *COMMAND STATS* ⌋\n> │ Total commands run: *${total}*\n> │\n> │ *Top ${top.length}:*\n${lines.split("\n").map(l => `> │ ${l}`).join("\n")}\n> ╰⊷ ✨ _${conText.botFooter || "Powered by GURUTECH"}_`,
+      );
+    } catch (error) {
+      await reply(`❌ Error: ${error.message}`);
+    }
+  },
+);
+
+gmd(
+  {
+    pattern: "resetstats",
+    react: "🗑️",
+    category: "owner",
+    description: "Reset all command usage statistics",
+  },
+  async (from, Guru, conText) => {
+    const { reply, react, isSuperUser } = conText;
+    if (!isSuperUser) return reply("❌ Owner Only Command!");
+
+    try {
+      await resetStats();
+      await react("✅");
+      await reply("✅ Command usage statistics have been reset.");
     } catch (error) {
       await reply(`❌ Error: ${error.message}`);
     }

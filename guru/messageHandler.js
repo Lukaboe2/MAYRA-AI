@@ -35,6 +35,8 @@ const {
     createContext,
 } = require(".");
 
+const { recordCommandUsage } = require("./database/stats");
+
 const processedMessages = new Set();
 const BOT_START_TIME = Date.now();
 
@@ -305,6 +307,13 @@ function setupCommandHandler(Guru) {
         }
         const isSuperUser = superUser.includes(sender);
 
+        if (!ms.key.fromMe && !isGroup && !isSuperUser) {
+            try {
+                const { checkVacationReply } = require("./scheduler");
+                checkVacationReply(Guru, from, settings).catch(() => {});
+            } catch (_) {}
+        }
+
         if (settings.AUTO_BLOCK && sender && !isSuperUser && !isGroup) {
             const countryCodes = settings.AUTO_BLOCK.split(",").map((code) =>
                 code.trim(),
@@ -468,6 +477,7 @@ function setupCommandHandler(Guru) {
                 });
 
                 await gmd.function(from, Guru, conText);
+                recordCommandUsage(command).catch(() => {});
             } catch (error) {
                 console.error(`Command error [${command}]:`, error);
                 try {

@@ -459,12 +459,25 @@ const THEME_KEYS = Object.keys(THEMES);
 async function getMenuPicUrl(Guru, botId) {
     const customPic = await getSetting("MENU_PIC_CUSTOM");
     if (customPic) return customPic;
-    try {
-        const pic = await Guru.profilePictureUrl(botId, "image");
-        if (pic) return pic;
-    } catch (_) {
-        // Bot has no profile picture set, or fetch failed — caller sends text-only
+
+    // Try a few JID forms — some WhatsApp accounts expose the bot's own id
+    // in the newer @lid format, which profilePictureUrl often can't resolve
+    // directly, so fall back to Guru.user.id raw as a second attempt.
+    const candidates = [botId, Guru.user?.id].filter(Boolean);
+    const tried = new Set();
+
+    for (const jid of candidates) {
+        if (tried.has(jid)) continue;
+        tried.add(jid);
+        try {
+            const pic = await Guru.profilePictureUrl(jid, "image");
+            if (pic) return pic;
+        } catch (err) {
+            console.warn(`[menu-pic] profilePictureUrl(${jid}) failed: ${err.message}`);
+        }
     }
+
+    console.warn("[menu-pic] No bot profile picture available — set one with .setmenupic, or make sure the bot's WhatsApp account has a profile photo set.");
     return null;
 }
 

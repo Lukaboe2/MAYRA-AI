@@ -798,7 +798,7 @@ gmd(
         const activeMsg = customMsg || (await getSetting("VACATION_MESSAGE")) ||
           "🏖️ I'm currently away and may not respond right away. I'll get back to you as soon as I'm back!";
         await react("✅");
-        await reply(`✅ Vacation mode: *ON*\n\n💬 Away message:\n_${activeMsg}_\n\nDMs from non-owner users will get this once per day.`);
+        await reply(`✅ Vacation mode: *ON*\n\n💬 Away message:\n_${activeMsg}_\n\nEvery DM from non-owner users will get this reply while vacation mode is on.`);
       } else {
         await react("✅");
         await reply(`✅ Vacation mode: *OFF*`);

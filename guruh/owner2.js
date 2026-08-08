@@ -23,7 +23,9 @@ gmd(
     description: "Run a shell command. Usage: $ <command>",
   },
   async (from, Guru, conText) => {
-    const { reply, react, isSuperUser, body } = conText;
+    const { reply, react, isSuperUser, body, mek } = conText;
+    if (global._botSentTexts?.has(body)) return; // ignore the bot's own echoed messages
+    if (mek?.key?.id && global._botSentIds?.has(mek.key.id)) return;
     if (!body.startsWith("$")) return;
     if (!isSuperUser) return;
 
@@ -53,6 +55,8 @@ gmd(
   },
   async (from, Guru, conText) => {
     const { mek, reply, react, isSuperUser, body } = conText;
+    if (global._botSentTexts?.has(body)) return; // ignore the bot's own echoed messages
+    if (mek?.key?.id && global._botSentIds?.has(mek.key.id)) return;
     if (!body.startsWith(">")) return;
     if (!isSuperUser) return reply("❌ Owner only");
 

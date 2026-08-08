@@ -248,6 +248,29 @@ async function startGuru() {
         global._botSocket     = GuruSocket;
         store.bind(GuruSocket.ev);
 
+        // ── Track the bot's own outgoing message IDs ────────────────────────
+        // In a self-chat, every message the bot sends to itself arrives back
+        // through the same event stream with fromMe:true — identical to a
+        // genuine command the owner typed. Command handlers that match on
+        // message body (like the "$" shell-exec and ">" eval commands) need
+        // a way to ignore the bot's own echoes without also ignoring real
+        // owner input, so we tag sent IDs here and let handlers check them.
+        global._botSentIds = global._botSentIds || new Set();
+        const _origSendMessage = GuruSocket.sendMessage.bind(GuruSocket);
+        GuruSocket.sendMessage = async (...args) => {
+            const result = await _origSendMessage(...args);
+            const id = result?.key?.id;
+            if (id) {
+                global._botSentIds.add(id);
+                // Keep the set small — only recent sends matter
+                if (global._botSentIds.size > 500) {
+                    const first = global._botSentIds.values().next().value;
+                    global._botSentIds.delete(first);
+                }
+            }
+            return result;
+        };
+
         // Persist credentials on update
         GuruSocket.ev.process(async (events) => {
             if (events["creds.update"]) await saveCreds();

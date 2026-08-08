@@ -8,6 +8,7 @@ const {
     sendMenuMsg,
     getSortedCategories,
     CAT_ICONS,
+    getMenuPicUrl,
 } = require("./design");
 
 // ─── 1. MENU ──────────────────────────────────────────────────────────────────
@@ -69,8 +70,7 @@ gmd(
         description: "Reply with a category number to browse commands",
     },
     async (from, Guru, conText) => {
-        const HARDCODED_PIC = "https://res.cloudinary.com/dqxlb29uz/image/upload/v1780267810/bwm_uploads/media-1780267810008.jpg";
-        const { body, mek, botName, botPrefix, botFooter, newsletterJid, newsletterUrl, sender } = conText;
+        const { body, mek, botName, botPrefix, botFooter, newsletterJid, sender, botId } = conText;
 
         const n    = parseInt(body.trim(), 10);
         const cats = getSortedCategories();
@@ -96,30 +96,28 @@ gmd(
 ${cmdList}
 > ╰⊷ ✨ _${botFooter || "Powered by GURUTECH"}_`;
 
+        const picUrl = await getMenuPicUrl(Guru, botId);
+        const contextInfo = {
+            mentionedJid: [sender],
+            forwardingScore: 5,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+                newsletterJid: newsletterJid || "120363406649804510@newsletter",
+                newsletterName: botName || "ULTRA GURU",
+                serverMessageId: 0,
+            },
+        };
+
         try {
-            await Guru.sendMessage(from, {
-                text: text.trim(),
-                contextInfo: {
-                    mentionedJid: [sender],
-                    forwardingScore: 5,
-                    isForwarded: true,
-                    forwardedNewsletterMessageInfo: {
-                        newsletterJid: newsletterJid || "120363406649804510@newsletter",
-                        newsletterName: botName || "ULTRA GURU",
-                        serverMessageId: 0,
-                    },
-                    externalAdReply: {
-                        title: botName || "ULTRA GURU",
-                        body: botFooter || "Powered by GURUTECH",
-                        thumbnailUrl: HARDCODED_PIC,
-                        mediaType: 1,
-                        mediaUrl: HARDCODED_PIC,
-                        sourceUrl: newsletterUrl || "https://whatsapp.com/channel/0029Vb7jauLHLHQbkcbcHi0e",
-                        showAdAttribution: true,
-                        renderLargerThumbnail: true,
-                    },
-                },
-            }, { quoted: mek });
+            if (picUrl) {
+                await Guru.sendMessage(from, {
+                    image: { url: picUrl },
+                    caption: text.trim(),
+                    contextInfo,
+                }, { quoted: mek });
+            } else {
+                await Guru.sendMessage(from, { text: text.trim(), contextInfo }, { quoted: mek });
+            }
         } catch {
             await Guru.sendMessage(from, { text: text.trim() }, { quoted: mek });
         }

@@ -453,16 +453,26 @@ const THEME_KEYS = Object.keys(THEMES);
 
 // ─── shared send helper ───────────────────────────────────────────────────────
 
-const MENU_IMAGE_URL = "https://res.cloudinary.com/dqxlb29uz/image/upload/v1780267810/bwm_uploads/media-1780267810008.jpg";
+// Resolves the image to use in menu/category cards: an owner-set custom pic
+// (via .setmenupic) takes priority, otherwise fall back to the bot's own
+// live WhatsApp profile picture — always valid, no dead hardcoded URLs.
+async function getMenuPicUrl(Guru, botId) {
+    const customPic = await getSetting("MENU_PIC_CUSTOM");
+    if (customPic) return customPic;
+    try {
+        const pic = await Guru.profilePictureUrl(botId, "image");
+        if (pic) return pic;
+    } catch (_) {
+        // Bot has no profile picture set, or fetch failed — caller sends text-only
+    }
+    return null;
+}
 
 async function sendMenuMsg(Guru, from, text, conText) {
-    const { mek, botName, newsletterJid, sender } = conText;
-    // Use custom menu pic if owner set one via .setmenupic, otherwise use hardcoded default
-    const customPic = await getSetting("MENU_PIC_CUSTOM");
-    const picUrl = customPic || MENU_IMAGE_URL;
+    const { mek, botName, newsletterJid, sender, botId } = conText;
+    const picUrl = await getMenuPicUrl(Guru, botId);
     try {
-        await Guru.sendMessage(from, {
-            image: { url: picUrl },
+        const base = {
             caption: text.trim(),
             contextInfo: {
                 mentionedJid: [sender],
@@ -474,7 +484,13 @@ async function sendMenuMsg(Guru, from, text, conText) {
                     serverMessageId: 0,
                 },
             },
-        }, { quoted: mek });
+        };
+        if (picUrl) {
+            await Guru.sendMessage(from, { image: { url: picUrl }, ...base }, { quoted: mek });
+        } else {
+            const { caption, ...rest } = base;
+            await Guru.sendMessage(from, { text: caption, ...rest }, { quoted: mek });
+        }
     } catch {
         await Guru.sendMessage(from, { text: text.trim() }, { quoted: mek });
     }
@@ -943,4 +959,4 @@ async function buildThemedMenu(conText, Guru) {
     return theme.render(data);
 }
 
-module.exports = { buildThemedMenu, THEMES, THEME_KEYS, buildMenuData, sendMenuMsg, getSortedCategories, CAT_ICONS };
+module.exports = { buildThemedMenu, THEMES, THEME_KEYS, buildMenuData, sendMenuMsg, getSortedCategories, CAT_ICONS, getMenuPicUrl };

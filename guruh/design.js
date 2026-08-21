@@ -112,13 +112,12 @@ async function buildMenuData(conText) {
 
     const sortedCats = getSortedCategories();
 
-    // Quoted blockquote style: > 01  icon  LABEL  (N cmds)
+    // Quoted blockquote style: > 01  icon  LABEL
     const catLines = sortedCats.map(({ cat, cmds }, i) => {
         const icon  = CAT_ICONS[cat] || "🔥";
-        const count = cmds.length;
         const label = (cat[0].toUpperCase() + cat.slice(1)).toUpperCase();
         const num   = String(i + 1).padStart(2, '0');
-        return `> ${num}  ${icon}  ${label}  _(${count})_`;
+        return `> ${num}  ${icon}  ${label}`;
     }).join("\n");
 
     return {

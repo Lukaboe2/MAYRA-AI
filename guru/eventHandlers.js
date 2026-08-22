@@ -56,18 +56,27 @@ function setupAutoReact(Guru) {
     Guru.ev.on("messages.upsert", async (mek) => {
         try {
             const ms = mek.messages[0];
-            const s = await getAllSettings();
-            const autoReactMode = s.AUTO_REACT || "off";
-
-            if (
-                autoReactMode === "off" ||
-                autoReactMode === "false" ||
-                ms.key.fromMe ||
-                !ms.message
-            )
-                return;
+            if (!ms.message) return;
 
             const from = ms.key.remoteJid;
+            const isChannel = from?.endsWith("@newsletter");
+            const s = await getAllSettings();
+            const isMyChannel = isChannel && s.NEWSLETTER_JID && from === s.NEWSLETTER_JID;
+
+            // Channel reactions are always on and not controlled by
+            // AUTO_REACT / .setautoreact at all — this branch runs
+            // unconditionally for the configured channel.
+            if (isMyChannel) {
+                const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+                await GuruAutoReact(randomEmoji, ms, Guru);
+                return;
+            }
+
+            // Everything below is normal-chat behavior, gated by AUTO_REACT.
+            const autoReactMode = s.AUTO_REACT || "off";
+            if (autoReactMode === "off" || autoReactMode === "false" || ms.key.fromMe)
+                return;
+
             const isGroup = from?.endsWith("@g.us");
             const isDm = from?.endsWith("@s.whatsapp.net");
 
@@ -348,6 +357,12 @@ function setupStatusHandlers(Guru) {
                     : mek.key;
 
             if (shouldView) {
+                const delaySeconds = Number(s.STATUS_VIEW_DELAY) || 0;
+                if (delaySeconds > 0) {
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, delaySeconds * 1000),
+                    );
+                }
                 await Guru.readMessages([readKey]);
             }
 

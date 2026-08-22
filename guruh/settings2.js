@@ -160,6 +160,48 @@ gmd(
 
 gmd(
   {
+    pattern: "setstatusdelay",
+    aliases: ["statusdelay", "viewstatusdelay"],
+    react: "⚙️",
+    category: "owner",
+    description: "Set a delay (in seconds) before auto-viewing statuses",
+  },
+  async (from, Guru, conText) => {
+    const { q, reply, react, isSuperUser } = conText;
+    if (!isSuperUser) return reply("❌ Owner Only Command!");
+    if (!q || q.trim() === "")
+      return reply(
+        "❌ Please provide a delay in seconds!\nExample: .setstatusdelay 10\nUse 0 to view instantly.",
+      );
+
+    const seconds = Number(q.trim());
+    if (!Number.isFinite(seconds) || seconds < 0 || seconds > 3600) {
+      return reply(
+        "❌ Please provide a valid number of seconds between 0 and 3600.",
+      );
+    }
+
+    try {
+      const current = await getSetting("STATUS_VIEW_DELAY");
+      const value = String(Math.floor(seconds));
+      if (current === value) {
+        return reply(`⚠️ Status view delay is already: *${value}s*`);
+      }
+      await setSetting("STATUS_VIEW_DELAY", value);
+      await react("✅");
+      await reply(
+        value === "0"
+          ? "✅ Status view delay disabled — statuses will be viewed instantly."
+          : `✅ Status view delay set to: *${value} second${value === "1" ? "" : "s"}*`,
+      );
+    } catch (error) {
+      await reply(`❌ Error: ${error.message}`);
+    }
+  },
+);
+
+gmd(
+  {
     pattern: "setstatusemojis",
     aliases: ["statusemojis", "likeemojis"],
     react: "⚙️",

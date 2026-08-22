@@ -112,12 +112,11 @@ async function buildMenuData(conText) {
 
     const sortedCats = getSortedCategories();
 
-    // Quoted blockquote style: > 01  icon  LABEL
+    // Quoted blockquote style: > 01  LABEL
     const catLines = sortedCats.map(({ cat, cmds }, i) => {
-        const icon  = CAT_ICONS[cat] || "🔥";
         const label = (cat[0].toUpperCase() + cat.slice(1)).toUpperCase();
         const num   = String(i + 1).padStart(2, '0');
-        return `> ${num}  ${icon}  ${label}`;
+        return `> ${num}  ${label}`;
     }).join("\n");
 
     return {
@@ -482,7 +481,20 @@ async function getMenuPicUrl(Guru, botId) {
 
 async function sendMenuMsg(Guru, from, text, conText) {
     const { mek, botName, newsletterJid, sender, botId } = conText;
-    const picUrl = await getMenuPicUrl(Guru, botId);
+
+    // Prefer the requesting user's own profile picture for the menu card.
+    // Falls back to the bot's custom/own picture if the user has none set
+    // or their privacy settings block it.
+    let picUrl = null;
+    if (sender) {
+        try {
+            picUrl = await Guru.profilePictureUrl(sender, "image");
+        } catch (_) {
+            // No photo, or privacy settings prevent fetching it — fall through
+        }
+    }
+    if (!picUrl) picUrl = await getMenuPicUrl(Guru, botId);
+
     try {
         const base = {
             caption: text.trim(),

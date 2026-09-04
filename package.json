@@ -1,7 +1,7 @@
 {
   "name": "mayra-ai",
   "version": "5.0.0",
-  "description": "GURUTECH 😎 - Ultimate WhatsApp Bot by GuruTech",
+  "description": "LUKATECH 😎 - Ultimate WhatsApp Bot by GuruTech",
   "main": "./index.js",
   "type": "commonjs",
   "engines": {

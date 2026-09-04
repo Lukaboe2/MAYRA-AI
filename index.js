@@ -352,7 +352,7 @@ async function sendStartupMessage(socket, s) {
             `⚡ *Prefix*   : ${s.PREFIX || d.PREFIX}`,
             `⚙️ *Mode*     : ${modeLabel}`,
             `🔒 *Licence*  : ${expLine}`,
-            `📲 *Telegram* : t.me/GURU_TECHLAB`,
+            `📲 *Telegram* : t.me/LUCVOICE`,
             `┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄`,
             `> ✨ _${s.CAPTION || d.CAPTION}_`,
             `> _Allow a few seconds to sync._`,

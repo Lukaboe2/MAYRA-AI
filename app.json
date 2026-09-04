@@ -15,7 +15,7 @@
     "BOT_NAME": {
       "description": "Name of your bot",
       "required": false,
-      "value": "ULTRA GURU"
+      "value": "MAYRA-AI"
     },
     "OWNER_NAME": {
       "description": "Owner name",

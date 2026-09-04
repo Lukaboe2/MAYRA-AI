@@ -31,12 +31,12 @@ const SettingsDB = DATABASE.define(
 
 const DEFAULT_SETTINGS = {
     PREFIX: ".",
-    OWNER_NAME: "GuruTech",
+    OWNER_NAME: "LukaTech",
     OWNER_NUMBER: config.OWNER_NUMBER || "",
-    BOT_NAME: "ULTRA GURU",
-    FOOTER: "Powered by GuruTech",
-    CAPTION: "⚡ ULTRA GURU Premium | Ultra Fast | Ultra Secure",
-    BOT_PIC: "https://res.cloudinary.com/dqxlb29uz/image/upload/v1780267810/bwm_uploads/media-1780267810008.jpg",
+    BOT_NAME: "MAYRA-AI",
+    FOOTER: "Powered by LukaTech",
+    CAPTION: "⚡ MAYRA-AI Premium | Ultra Fast | Ultra Secure",
+    BOT_PIC: "https://files.catbox.moe/7b5bxf.png",
     VERSION: packageJson.version || "2.0.0",
     MODE: config.MODE || "public",
     WARN_COUNT: "3",  // legacy alias — WARN_LIMIT (in extended settings) is the canonical key
@@ -63,14 +63,14 @@ const DEFAULT_SETTINGS = {
     AUTO_BIO: "true",
     AUTO_BLOCK: "",
     AUTO_JOIN: "true",  // Added auto join setting
-    YT: "youtube.com/@gurutech",
+    YT: "youtube.com/@lucvoice",
     NEWSLETTER_JID: "120363408668355773@newsletter",
     GC_JID: "Cp6waPAdT3hLVcbdfBeV61",  // Updated group invite code
-    NEWSLETTER_URL: "https://whatsapp.com/channel/0029Vb7jauLHLHQbkcbcHi0e",
-    BOT_REPO: "GuruhTech/ULTRA-GURU",
+    NEWSLETTER_URL: "https://whatsapp.com/channel/0029Vb7jauLHLHQbkcbcH",
+    BOT_REPO: "Mayrabrand/MAYRA-AI",
     AUTO_UPDATE: "true",
-    PACK_NAME: "ULTRA GURU",
-    PACK_AUTHOR: "GURUTECH 😎",
+    PACK_NAME: "MAYRA-AI",
+    PACK_AUTHOR: "LUKATECH",
     SUDO_NUMBERS: "",
     PM_PERMIT: "false",
     GREETINGS_ENABLED: "false",
@@ -88,7 +88,7 @@ const DEFAULT_SETTINGS = {
     TAG_PROTECT: "false",
     GLOBAL_SPAM_FILTER: "false",
     BOT_PREFIX: ".",
-    BOT_BIO: "Powered by GURUTECH 🚀",
+    BOT_BIO: "Powered by LUKATECH🚀",
     BOT_VERSION: packageJson.version || "5.0.0",
     MENU_THEME: "ultra",
     // Anti-viewonce / VV tracker
@@ -145,7 +145,7 @@ async function initializeSettings() {
     }
 
     initialized = true;
-    console.log("✅ ULTRA GURU Settings Initialized");
+    console.log("✅ MAYRA-AI Settings Initialized");
 }
 
 async function getSetting(key) {

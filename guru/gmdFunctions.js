@@ -67,7 +67,7 @@ function printKatabumpGuidance() {
 
  1. Open File Manager, go to the project root
  2. Create/edit a file named .env
- 3. Add a line: SESSION_ID=MAYRA~xxxxxxxxxxxx
+ 3. Add a line: SESSION_ID=GURU~xxxxxxxxxxxx
  4. Save, then restart the server
 ------------------------------------------------------------
 `);
@@ -97,7 +97,7 @@ async function loadSession() {
                 console.error("------------------------------------------------------------");
                 console.error(" SESSION_ID is not set!");
                 console.error(" Add SESSION_ID to your platform's environment variables.");
-                console.error(" Format: SESSION_ID=MAYRA~xxxxxxxxxxxxxxxx...");
+                console.error(" Format: SESSION_ID=GURU~xxxxxxxxxxxxxxxx...");
                 console.error("------------------------------------------------------------");
                 if (hostEnv === 'replit') {
                     // On Replit, keep the web server alive so the dashboard is accessible
@@ -120,7 +120,7 @@ async function loadSession() {
  ULTRA GURU MD — SESSION SETUP
 
  Paste your SESSION_ID below and press Enter.
- Format: MAYRA~xxxxxxxx...
+ Format: GURU~xxxxxxxx...
 ------------------------------------------------------------`);
                 sessionId = await new Promise((resolve) => {
                     rl.question('\n> SESSION_ID: ', (answer) => {
@@ -195,7 +195,7 @@ async function processSessionId(sessionId) {
         const isValidFormat = sessionId.startsWith('GURU~');
         
         if (!isValidFormat) {
-            throw new Error("❌ Invalid session format. Expected 'MAYRA~.....'");
+            throw new Error("❌ Invalid session format. Expected 'GURU~.....'");
         }
 
         const [header, b64data] = sessionId.split('~');

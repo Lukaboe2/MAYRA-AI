@@ -172,9 +172,9 @@ const setupGroupEventsListeners = (Guru) => {
 
             const timeZone =
                 (await getSetting("TIME_ZONE")) || "Africa/Nairobi";
-            const botName = (await getSetting("BOT_NAME")) || "ULTRA GURU";
+            const botName = (await getSetting("BOT_NAME")) || "MAYRA-AI";
             const botFooter =
-                (await getSetting("FOOTER")) || "Powered by GuruTech";
+                (await getSetting("FOOTER")) || "Powered by LukaTech";
             const newsletterJid = (await getSetting("NEWSLETTER_JID")) || "";
 
             const currentTime = moment().tz(timeZone).format("h:mm A");

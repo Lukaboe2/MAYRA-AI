@@ -1,15 +1,31 @@
-
-## 3. GET SESSION ID
-
-Choose your preferred method:
-
-[![Pair Code](https://img.shields.io/badge/PAIR%20CODE-00b8ff?style=for-the-badge&logo=link&logoColor=white)](https://ultra-guru-pair-1.onrender.com/pair)
-[![QR Code](https://img.shields.io/badge/SCAN%20QR%20CODE-1E90FF?style=for-the-badge&logo=qrcode&logoColor=white)](https://ultra-guru-pair-1.onrender.com/qr)
-
----
+<h1 align="center"> MAYRA-AI </h1>
 
 <p align="center">
-  <a href="https://dashboard.heroku.com/new?template=https://github.com/Lukaboe2/ULTRA">
-    <img src="https://img.shields.io/badge/DEPLOY%20TO%20HEROKU-430098?style=for-the-badge&logo=heroku&logoColor=white" width="150"/>
+  <a href="https://github.com/Mayrabrand/MAYRA-AI">
+    <img alt="MAYRA AI docs" height="350" src="https://i.imgur.com/SOaXHIQ.jpeg">
   </a>
+</p>
 
+<p align="center">
+    <strong>1. FORK REPOSITORY </strong>
+  <br>
+    <a href="https://github.com/Mayrabrand/MAYRA-AI/fork" target="_blank">
+        <img alt="Fork Repo" src="https://img.shields.io/badge/Fork%20Repo-100000?style=for-the-badge&logo=scan&logoColor=white&labelColor=orange&color=orange"/>
+    </a>
+</p>
+
+<p align="center">
+    <strong>2. GET SESSION ID</strong>
+    <br>
+    <a href="https://mayrapair.onrender.com/pair" target="_blank">
+        <img alt="WEBSITE" src="https://img.shields.io/badge/Pair-100000?style=for-the-badge&logo=scan&logoColor=white&labelColor=green&color=green"/>
+    </a>
+</p>
+
+<p align="center">
+    <strong>3. DEPLOY TO HEROKU</strong>
+    <br>
+    <a href="https://dashboard.heroku.com/new?template=https://github.com/Mayrabrand/MAYRA-AI#main" target="_blank">
+        <img alt="Deploy to heroku" src="https://img.shields.io/badge/Deploy-100000?style=for-the-badge&logo=scan&logoColor=white&labelColor=blue&color=blue"/>
+    </a>
+</p>

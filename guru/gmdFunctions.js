@@ -117,10 +117,10 @@ async function loadSession() {
                 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
                 console.log(`
 ------------------------------------------------------------
- ULTRA GURU MD — SESSION SETUP
+ MAYRA-AI — SESSION SETUP
 
  Paste your SESSION_ID below and press Enter.
- Format: GURU~xxxxxxxx...
+ Format: LUKA~xxxxxxxx...
 ------------------------------------------------------------`);
                 sessionId = await new Promise((resolve) => {
                     rl.question('\n> SESSION_ID: ', (answer) => {
